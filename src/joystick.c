@@ -23,21 +23,19 @@
 
 #include "joystick.h"
 
+joystick_state_t joystick_state = RELEASED;
+
 #define JOYSTICK_UP_BIT     (1 << 23) /* DIP15 <=> P0_23 */
 #define JOYSTICK_DOWN_BIT   (1 << 17) /* DIP12 <=> P0_17 */
 #define JOYSTICK_LEFT_BIT   (1 << 15) /* DIP13 <=> P0_15 */
 #define JOYSTICK_RIGHT_BIT  (1 << 24) /* DIP16 <=> P0_24 */
 #define JOYSTICK_CENTER_BIT (1 << 16) /* DIP14 <=> P0_16 */
 
-joystick_state_t joystick_state = RELEASED;
-rflpc_irq_handler_t additionnal_handler = NULL;
+static rflpc_irq_handler_t _handler = NULL;
 
-RFLPC_IRQ_HANDLER _eint3_handler()
+rflpc_irq_handler_t joystick_eint3_handler()
 {
   rflpc_irq_global_disable();
-
-  /* Disable interrupt */
-  rflpc_irq_disable(EINT3_IRQn);
 
   /* JOYSTICK_UP */
   if (LPC_GPIOINT->IO0IntStatR & JOYSTICK_UP_BIT) {
@@ -90,13 +88,8 @@ RFLPC_IRQ_HANDLER _eint3_handler()
   }
 
  EXIT_HANDLER:
-  /* Clear pending interrupts for joysticks */
-  LPC_GPIOINT->IO0IntClr =
-    (JOYSTICK_UP_BIT | JOYSTICK_DOWN_BIT | JOYSTICK_LEFT_BIT
-     | JOYSTICK_RIGHT_BIT | JOYSTICK_CENTER_BIT);
-
-  if (additionnal_handler != NULL)
-    additionnal_handler();
+  if (_handler != NULL)
+    _handler();
   
   /* Clear pending interrupts for joysticks */
   LPC_GPIOINT->IO0IntClr =
@@ -104,16 +97,9 @@ RFLPC_IRQ_HANDLER _eint3_handler()
      | JOYSTICK_RIGHT_BIT | JOYSTICK_CENTER_BIT);
 
   rflpc_irq_global_enable();
-  /* Enable interrupt */
-  rflpc_irq_enable(EINT3_IRQn);
 }
 
-void joystick_set_additionnal_handler(rflpc_handler_t handler)
-{
-  additionnal_handler = handler;
-}
-
-void joystick_init(rflpc_irq_handler_t handler)
+void libboard_joystick_init(rflpc_irq_handler_t handler)
 {
   /* Initialize joystick's pins as GPIO inputs */
   rflpc_pin_set(MBED_DIP12, 0, RFLPC_PIN_MODE_RESISTOR_PULL_DOWN, 0);
@@ -133,13 +119,16 @@ void joystick_init(rflpc_irq_handler_t handler)
      | JOYSTICK_RIGHT_BIT | JOYSTICK_CENTER_BIT);
 
   /* Set irq handler */
-  rflpc_irq_set_handler(EINT3_IRQn, _eint3_handler);
+  rflpc_irq_set_handler(EINT3_IRQn, joystick_eint3_handler);
 
   /* Set additionnal handler if needed */
-  additionnal_handler = handler;
+  _handler = handler;
 
-  rflpc_led_set(RFLPC_LED_4);
   /* Enable EINT3 */
   rflpc_irq_enable(EINT3_IRQn);
-  rflpc_led_clr(RFLPC_LED_4);
+}
+
+void libboard_joystick_set_handler(rflpc_handler_t handler)
+{
+  _handler = handler;
 }
