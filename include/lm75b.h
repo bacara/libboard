@@ -40,6 +40,11 @@
  * @return If initialization was successful, returns 0. Returns -1 otherwise.
  */
 uint8_t libboard_lm75b_init();
+
+/** Get temperature from LM75B thermometer.
+ * @return If successful, return the current temperature in Celsius degrees.
+ *         Returns 0xFFFF otherwise.
+ */
 int16_t libboard_lm75b_get_temp();
 
 #endif /* __LIBBOARD_LM75B_H__ */

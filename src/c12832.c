@@ -17,13 +17,12 @@
 
 /*
   Author: Christophe Bacara <christophe.bacara@etudiant.univ-lille1.fr>
-  Created: <2013-12-16 00:00:00 (bacara)>
 */
 
 #include <rflpc17xx/drivers/gpio.h> /* GPIO support for pins : RST, A0, CS */
 #include <rflpc17xx/drivers/spi.h>  /* SPI support for data transfers */
-#include <rflpc17xx/tools.h>        /*  */
-#include <rflpc17xx/debug.h>        /*  */
+#include <rflpc17xx/tools.h>
+#include <rflpc17xx/debug.h>
 
 #include "c12832.h"
 #include "fonts.h"
